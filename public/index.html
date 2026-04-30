@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    input {
+      padding: 10px;
+      flex: 1;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-add {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-edit {
+      background: #007bff;
+      color: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f1f1f1;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Student Management System</h1>
+
+  <div class="container">
+
+    <!-- Form -->
+    <div class="form-group">
+      <input id="name" placeholder="Name">
+      <input id="roll" placeholder="Roll Number">
+      <input id="branch" placeholder="Branch">
+      <input id="marks" type="number" placeholder="Marks">
+      <button class="btn-add" onclick="addStudent()">Add</button>
+    </div>
+
+    <!-- Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Roll No</th>
+          <th>Branch</th>
+          <th>Marks</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+  </div>
+
+<script>
+const API = '/api/students';
+
+// Load students
+async function loadStudents() {
+  const res = await fetch(API);
+  const data = await res.json();
+
+  const table = document.getElementById('tableBody');
+  table.innerHTML = '';
+
+  data.forEach(s => {
+    const row = document.createElement('tr');
+
+    row.innerHTML = `
+      <td>${s.name}</td>
+      <td>${s.rollNumber}</td>
+      <td>${s.branch || '-'}</td>
+      <td>
+        <input value="${s.marks || 0}" 
+          onchange="updateMarks('${s._id}', this.value)">
+      </td>
+      <td>
+        <button class="btn-delete" onclick="deleteStudent('${s._id}')">Delete</button>
+      </td>
+    `;
+
+    table.appendChild(row);
+  });
+}
+
+// Add student
+async function addStudent() {
+  const student = {
+    name: document.getElementById('name').value,
+    rollNumber: document.getElementById('roll').value,
+    branch: document.getElementById('branch').value,
+    marks: document.getElementById('marks').value
+  };
+
+  await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(student)
+  });
+
+  document.querySelectorAll('input').forEach(i => i.value = '');
+  loadStudents();
+}
+
+// Delete student
+async function deleteStudent(id) {
+  await fetch(`${API}/${id}`, { method: 'DELETE' });
+  loadStudents();
+}
+
+// Update marks
+async function updateMarks(id, marks) {
+  await fetch(`${API}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ marks })
+  });
+}
+
+// Initial load
+loadStudents();
+</script>
+
+</body>
+</html>
